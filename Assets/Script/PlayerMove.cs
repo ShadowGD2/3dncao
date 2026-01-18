@@ -10,6 +10,12 @@ public class CrusaderControl : MonoBehaviour {
     public float gravity = 20f; 
     public float jumpForce = 8f;
     
+    [Header("Thông số chiến đấu")]
+    public Transform attackPoint;   // Điểm tâm của cú chém (thường đặt trước mặt)
+    public float attackRange = 1f;  // Bán kính cú chém
+    public LayerMask enemyLayers;   // Chỉ đánh vào những gì thuộc lớp Enemy
+    public int attackDamage = 20;   // Sát thương gây ra
+
     private float verticalVelocity; 
     private Vector3 moveDir = Vector3.zero;
 
@@ -19,7 +25,7 @@ public class CrusaderControl : MonoBehaviour {
     }
 
     void Update() {
-        // 1. Lấy hướng từ Camera để nhân vật đi đúng hướng đang nhìn
+        // --- 1. XỬ LÝ DI CHUYỂN (GIỮ NGUYÊN) ---
         Vector3 camForward = Camera.main.transform.forward;
         Vector3 camRight = Camera.main.transform.right;
         camForward.y = 0;
@@ -27,22 +33,18 @@ public class CrusaderControl : MonoBehaviour {
         camForward.Normalize();
         camRight.Normalize();
 
-        // 2. Lấy Input phím di chuyển
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
         Vector3 inputDir = (camForward * v + camRight * h).normalized;
 
-        // 3. Xử lý Tốc độ & Animator
         bool isRunning = Input.GetKey(KeyCode.LeftShift);
         float currentSpeed = isRunning ? runSpeed : walkSpeed;
         
-        // Speed cho Animator: 0 (nghỉ), 1 (đi bộ), 2.5 (chạy)
         float animSpeed = inputDir.magnitude * (isRunning ? 2.5f : 1f);
         anim.SetFloat("Speed", animSpeed);
 
-        // 4. Xử lý Trọng lực và Nhảy
         if (controller.isGrounded) {
-            verticalVelocity = -1f; // Ghì nhân vật xuống mặt đất
+            verticalVelocity = -1f; 
             if (Input.GetKeyDown(KeyCode.Space)) {
                 anim.SetTrigger("Jump");
                 verticalVelocity = jumpForce;
@@ -51,21 +53,51 @@ public class CrusaderControl : MonoBehaviour {
             verticalVelocity -= gravity * Time.deltaTime;
         }
 
-        // 5. Thực hiện di chuyển
         Vector3 finalMove = inputDir * currentSpeed;
         finalMove.y = verticalVelocity;
         controller.Move(finalMove * Time.deltaTime);
 
-        // 6. Xoay mặt nhân vật theo hướng Camera
-        // Chỉ xoay khi có di chuyển hoặc xoay dần theo hướng Camera Y
         float targetAngle = Camera.main.transform.eulerAngles.y;
         Quaternion targetRotation = Quaternion.Euler(0, targetAngle, 0);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 0.15f);
 
-        // 7. Các nút chức năng khác
-        if (Input.GetMouseButtonDown(0)) anim.SetTrigger("Attack"); // Chuột trái
+        // --- 2. XỬ LÝ TẤN CÔNG ---
+        // Khi bấm chuột, chỉ kích hoạt Animation. 
+        // Việc gây sát thương sẽ do Animation Event gọi hàm DealDamage() bên dưới.
+        if (Input.GetMouseButtonDown(0)) 
+        {
+            anim.SetTrigger("Attack"); 
+        }
         
         if (Input.GetKeyDown(KeyCode.LeftControl)) anim.SetBool("isCrouching", true);
         if (Input.GetKeyUp(KeyCode.LeftControl)) anim.SetBool("isCrouching", false);
+    }
+
+    // --- HÀM MỚI: Gây sát thương (Sẽ được gọi bởi Animation Event) ---
+    public void DealDamage()
+    {
+        // 1. Tạo một hình cầu vô hình tại attackPoint để kiểm tra va chạm
+        Collider[] hitEnemies = Physics.OverlapSphere(attackPoint.position, attackRange, enemyLayers);
+
+        // 2. Duyệt qua tất cả kẻ thù trúng đòn
+        foreach(Collider enemy in hitEnemies)
+        {
+            Debug.Log("Đã chém trúng: " + enemy.name);
+
+            // Gọi hàm nhận sát thương bên script EnemyController
+            EnemyController enemyScript = enemy.GetComponent<EnemyController>();
+            if(enemyScript != null)
+            {
+                enemyScript.TakeDamage(attackDamage);
+            }
+        }
+    }
+
+    // Vẽ vòng tròn đỏ trong Scene để bạn dễ căn chỉnh tầm đánh (Gizmos)
+    void OnDrawGizmosSelected()
+    {
+        if (attackPoint == null) return;
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(attackPoint.position, attackRange);
     }
 }
