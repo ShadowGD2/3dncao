@@ -22,7 +22,7 @@ public class EnemyController : MonoBehaviour
     private Animator animator;
     private float lastAttackTime;
     private bool isDead = false;
-    
+
     // Biến cho việc tuần tra
     private Vector3 startPosition; // Vị trí gốc (ổ của quái)
     private float patrolTimer;     // Bộ đếm thời gian nghỉ
@@ -32,7 +32,7 @@ public class EnemyController : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         currentHealth = maxHealth;
-        
+
         // Lưu lại vị trí ban đầu làm tâm vùng tuần tra
         startPosition = transform.position;
         patrolTimer = patrolWaitTime; // Để nó đi ngay khi vào game
@@ -58,6 +58,11 @@ public class EnemyController : MonoBehaviour
 
         // Cập nhật Animation chạy/đứng
         animator.SetFloat("Speed", agent.velocity.magnitude);
+
+        if (Input.GetKeyDown(KeyCode.H))
+        {
+            TakeDamage(30); // Bấm 4 phát là Enemy chết
+        }
     }
 
     // Hàm xử lý việc đuổi và đánh
@@ -86,9 +91,9 @@ public class EnemyController : MonoBehaviour
     void PatrolLogic()
     {
         // Nếu đang đi dạo và chưa đến nơi -> cứ đi tiếp
-        if (agent.remainingDistance > agent.stoppingDistance) 
+        if (agent.remainingDistance > agent.stoppingDistance)
         {
-            return; 
+            return;
         }
 
         // Nếu đã đến nơi (hoặc đang đứng yên) -> Bắt đầu đếm giờ nghỉ
@@ -100,7 +105,7 @@ public class EnemyController : MonoBehaviour
             Vector3 newPos = RandomNavSphere(startPosition, patrolRadius, -1);
             agent.SetDestination(newPos);
             agent.isStopped = false;
-            
+
             patrolTimer = 0; // Reset bộ đếm
         }
     }
@@ -129,7 +134,7 @@ public class EnemyController : MonoBehaviour
         currentHealth -= damageAmount;
         if (currentHealth <= 0) Die();
         else animator.SetTrigger("Hit");
-        
+
         // Mẹo hay: Bị đánh cái là quay ra đuổi luôn, khỏi cần check tầm nhìn
         chaseRange = 100f; // Tăng tầm đuổi lên cực đại tạm thời (Aggro)
     }
