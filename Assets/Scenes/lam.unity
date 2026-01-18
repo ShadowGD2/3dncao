@@ -1330,6 +1330,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1226841572155585933, guid: 4ac52c3d45372204faa0a351de8dc0e9,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 222
+      objectReference: {fileID: 0}
     - target: {fileID: 2362407213137870716, guid: 4ac52c3d45372204faa0a351de8dc0e9,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
@@ -1344,6 +1349,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: QuestPanel
+      objectReference: {fileID: 0}
+    - target: {fileID: 8472805444747284492, guid: 4ac52c3d45372204faa0a351de8dc0e9,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8761063766236862152, guid: 4ac52c3d45372204faa0a351de8dc0e9,
         type: 3}
