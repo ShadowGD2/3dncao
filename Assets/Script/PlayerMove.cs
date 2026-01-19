@@ -11,13 +11,13 @@ public class CrusaderControl : MonoBehaviour {
     public float jumpForce = 8f;
     
     [Header("Thông số chiến đấu")]
-    public Transform attackPoint;   // Điểm tâm của cú chém (thường đặt trước mặt)
-    public float attackRange = 1f;  // Bán kính cú chém
-    public LayerMask enemyLayers;   // Chỉ đánh vào những gì thuộc lớp Enemy
-    public int attackDamage = 20;   // Sát thương gây ra
+    public Transform attackPoint;   
+    public float attackRange = 1f;  
+    public LayerMask enemyLayers;   
+    public int attackDamage = 20;   
 
     private float verticalVelocity; 
-    private Vector3 moveDir = Vector3.zero;
+    private float currentSpeed;
 
     void Start() {
         anim = GetComponent<Animator>();
@@ -25,7 +25,7 @@ public class CrusaderControl : MonoBehaviour {
     }
 
     void Update() {
-        // --- 1. XỬ LÝ DI CHUYỂN (GIỮ NGUYÊN) ---
+        // --- 1. XỬ LÝ DI CHUYỂN & XOAY MẶT ---
         Vector3 camForward = Camera.main.transform.forward;
         Vector3 camRight = Camera.main.transform.right;
         camForward.y = 0;
@@ -37,65 +37,63 @@ public class CrusaderControl : MonoBehaviour {
         float v = Input.GetAxis("Vertical");
         Vector3 inputDir = (camForward * v + camRight * h).normalized;
 
+        // Xử lý chạy
         bool isRunning = Input.GetKey(KeyCode.LeftShift);
-        float currentSpeed = isRunning ? runSpeed : walkSpeed;
+        currentSpeed = isRunning ? runSpeed : walkSpeed;
         
+        // Cập nhật Speed cho Animator
         float animSpeed = inputDir.magnitude * (isRunning ? 2.5f : 1f);
         anim.SetFloat("Speed", animSpeed);
 
+        // Xoay mặt theo hướng di chuyển (Yêu cầu của bạn)
+        if (inputDir != Vector3.zero) 
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(inputDir);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 0.15f);
+        }
+
+        // --- 2. XỬ LÝ ĐỠ KHIÊN (SHIELD) - NHẤN Q ---
+        if (Input.GetKeyDown(KeyCode.Q)) 
+        {
+            anim.SetBool("isShielding", true);
+        }
+        if (Input.GetKeyUp(KeyCode.Q)) 
+        {
+            anim.SetBool("isShielding", false);
+        }
+
+        // --- 3. XỬ LÝ NHẢY ---
         if (controller.isGrounded) {
             verticalVelocity = -1f; 
             if (Input.GetKeyDown(KeyCode.Space)) {
-                anim.SetTrigger("Jump");
+                anim.SetTrigger("Jump"); // Kích hoạt Trigger Jump
                 verticalVelocity = jumpForce;
             }
         } else {
             verticalVelocity -= gravity * Time.deltaTime;
         }
 
+        // Thực hiện di chuyển
         Vector3 finalMove = inputDir * currentSpeed;
         finalMove.y = verticalVelocity;
         controller.Move(finalMove * Time.deltaTime);
 
-        float targetAngle = Camera.main.transform.eulerAngles.y;
-        Quaternion targetRotation = Quaternion.Euler(0, targetAngle, 0);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 0.15f);
-
-        // --- 2. XỬ LÝ TẤN CÔNG ---
-        // Khi bấm chuột, chỉ kích hoạt Animation. 
-        // Việc gây sát thương sẽ do Animation Event gọi hàm DealDamage() bên dưới.
-        if (Input.GetMouseButtonDown(0)) 
-        {
-            anim.SetTrigger("Attack"); 
-        }
+        // --- 4. TẤN CÔNG & NGỒI ---
+        if (Input.GetMouseButtonDown(0)) anim.SetTrigger("Attack"); 
         
         if (Input.GetKeyDown(KeyCode.LeftControl)) anim.SetBool("isCrouching", true);
         if (Input.GetKeyUp(KeyCode.LeftControl)) anim.SetBool("isCrouching", false);
     }
 
-    // --- HÀM MỚI: Gây sát thương (Sẽ được gọi bởi Animation Event) ---
-    public void DealDamage()
-    {
-        // 1. Tạo một hình cầu vô hình tại attackPoint để kiểm tra va chạm
+    public void DealDamage() {
+        if (attackPoint == null) return;
         Collider[] hitEnemies = Physics.OverlapSphere(attackPoint.position, attackRange, enemyLayers);
-
-        // 2. Duyệt qua tất cả kẻ thù trúng đòn
-        foreach(Collider enemy in hitEnemies)
-        {
+        foreach(Collider enemy in hitEnemies) {
             Debug.Log("Đã chém trúng: " + enemy.name);
-
-            // Gọi hàm nhận sát thương bên script EnemyController
-            EnemyController enemyScript = enemy.GetComponent<EnemyController>();
-            if(enemyScript != null)
-            {
-                enemyScript.TakeDamage(attackDamage);
-            }
         }
     }
 
-    // Vẽ vòng tròn đỏ trong Scene để bạn dễ căn chỉnh tầm đánh (Gizmos)
-    void OnDrawGizmosSelected()
-    {
+    void OnDrawGizmosSelected() {
         if (attackPoint == null) return;
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(attackPoint.position, attackRange);
