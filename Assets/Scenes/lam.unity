@@ -256,7 +256,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 237662156}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.33847663, y: -0.5848847, z: 0.292617, w: 0.67654914}
+  m_LocalRotation: {x: 0.33847657, y: -0.5848848, z: 0.29261705, w: 0.6765491}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -904,7 +904,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 844607449}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.35771474, y: -0.576264, z: 0.30924878, w: 0.6665772}
+  m_LocalRotation: {x: 0.3577148, y: -0.576264, z: 0.30924872, w: 0.6665772}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -924,6 +924,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 44531bfcfdd8cb24b87d05b914fce8fe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!4 &949114958 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5091805756988155650, guid: dcd080cf0f675a44fab01082e339e55e,
+    type: 3}
+  m_PrefabInstance: {fileID: 418394716}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -1348,7 +1354,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1290492239}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.3767845, y: -0.5671083, z: 0.32573476, w: 0.65598667}
+  m_LocalRotation: {x: 0.3767845, y: -0.56710833, z: 0.32573473, w: 0.65598667}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1777,6 +1783,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_TagString
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 7417189712967402019, guid: 97ae1e0637a97aa4190fed1d568927e2,
+        type: 3}
+      propertyPath: attackPoint
+      value: 
+      objectReference: {fileID: 949114958}
+    - target: {fileID: 7417189712967402019, guid: 97ae1e0637a97aa4190fed1d568927e2,
+        type: 3}
+      propertyPath: enemyLayers.m_Bits
+      value: 64
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
