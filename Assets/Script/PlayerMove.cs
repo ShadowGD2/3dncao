@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems; // Bắt buộc phải có dòng này để kiểm tra UI
 
 public class CrusaderControl : MonoBehaviour {
     Animator anim;
@@ -37,36 +38,28 @@ public class CrusaderControl : MonoBehaviour {
         float v = Input.GetAxis("Vertical");
         Vector3 inputDir = (camForward * v + camRight * h).normalized;
 
-        // Xử lý chạy
         bool isRunning = Input.GetKey(KeyCode.LeftShift);
         currentSpeed = isRunning ? runSpeed : walkSpeed;
         
-        // Cập nhật Speed cho Animator
         float animSpeed = inputDir.magnitude * (isRunning ? 2.5f : 1f);
         anim.SetFloat("Speed", animSpeed);
 
-        // Xoay mặt theo hướng di chuyển (Yêu cầu của bạn)
+        // Xoay mặt theo hướng di chuyển
         if (inputDir != Vector3.zero) 
         {
             Quaternion targetRotation = Quaternion.LookRotation(inputDir);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 0.15f);
         }
 
-        // --- 2. XỬ LÝ ĐỠ KHIÊN (SHIELD) - NHẤN Q ---
-        if (Input.GetKeyDown(KeyCode.Q)) 
-        {
-            anim.SetBool("isShielding", true);
-        }
-        if (Input.GetKeyUp(KeyCode.Q)) 
-        {
-            anim.SetBool("isShielding", false);
-        }
+        // --- 2. XỬ LÝ ĐỠ KHIÊN (SHIELD) ---
+        if (Input.GetKeyDown(KeyCode.Q)) anim.SetBool("isShielding", true);
+        if (Input.GetKeyUp(KeyCode.Q)) anim.SetBool("isShielding", false);
 
         // --- 3. XỬ LÝ NHẢY ---
         if (controller.isGrounded) {
             verticalVelocity = -1f; 
             if (Input.GetKeyDown(KeyCode.Space)) {
-                anim.SetTrigger("Jump"); // Kích hoạt Trigger Jump
+                anim.SetTrigger("Jump");
                 verticalVelocity = jumpForce;
             }
         } else {
@@ -78,8 +71,15 @@ public class CrusaderControl : MonoBehaviour {
         finalMove.y = verticalVelocity;
         controller.Move(finalMove * Time.deltaTime);
 
-        // --- 4. TẤN CÔNG & NGỒI ---
-        if (Input.GetMouseButtonDown(0)) anim.SetTrigger("Attack"); 
+        // --- 4. TẤN CÔNG (CÓ KIỂM TRA UI) & NGỒI ---
+        // Chỉ cho phép đánh nếu KHÔNG nhấn vào các nút UI (Accept/Decline)
+        if (Input.GetMouseButtonDown(0)) 
+        {
+            if (!EventSystem.current.IsPointerOverGameObject())
+            {
+                anim.SetTrigger("Attack"); 
+            }
+        }
         
         if (Input.GetKeyDown(KeyCode.LeftControl)) anim.SetBool("isCrouching", true);
         if (Input.GetKeyUp(KeyCode.LeftControl)) anim.SetBool("isCrouching", false);
