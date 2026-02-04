@@ -9,7 +9,7 @@ public class EnemyController : MonoBehaviour
     public float attackCooldown = 2.0f;
 
     [Header("Cài đặt AI Thông minh")]
-    public float chaseRange = 10.0f;  // Khoảng cách để bắt đầu ĐUỔI (phải lớn hơn Attack Range)
+    public float chaseRange = 10.0f;  // Khoảng cách để bắt đầu ĐUỔI
     public float patrolRadius = 5.0f; // Bán kính vùng đi dạo tự do
     public float patrolWaitTime = 3.0f; // Thời gian đứng nghỉ rồi mới đi tiếp
 
@@ -17,64 +17,54 @@ public class EnemyController : MonoBehaviour
     public int maxHealth = 100;
     private int currentHealth;
 
-    // Các biến nội bộ
     private NavMeshAgent agent;
     private Animator animator;
     private float lastAttackTime;
     private bool isDead = false;
 
-    // Biến cho việc tuần tra
-    private Vector3 startPosition; // Vị trí gốc (ổ của quái)
-    private float patrolTimer;     // Bộ đếm thời gian nghỉ
+    private Vector3 startPosition;
+    private float patrolTimer;
 
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         currentHealth = maxHealth;
-
-        // Lưu lại vị trí ban đầu làm tâm vùng tuần tra
         startPosition = transform.position;
-        patrolTimer = patrolWaitTime; // Để nó đi ngay khi vào game
+        patrolTimer = patrolWaitTime;
     }
 
     void Update()
     {
         if (isDead) return;
 
-        // Tính khoảng cách tới Player
         float distanceToPlayer = Vector3.Distance(transform.position, playerTarget.position);
 
-        // --- TRƯỜNG HỢP 1: PHÁT HIỆN PLAYER (ĐUỔI THEO) ---
         if (distanceToPlayer < chaseRange)
         {
             EngagePlayer(distanceToPlayer);
         }
-        // --- TRƯỜNG HỢP 2: KHÔNG THẤY PLAYER (TUẦN TRA) ---
         else
         {
             PatrolLogic();
         }
 
-        // Cập nhật Animation chạy/đứng
         animator.SetFloat("Speed", agent.velocity.magnitude);
 
         if (Input.GetKeyDown(KeyCode.H))
         {
-            TakeDamage(30); // Bấm 4 phát là Enemy chết
+            TakeDamage(30);
         }
     }
 
-    // Hàm xử lý việc đuổi và đánh
     void EngagePlayer(float distance)
     {
-        // Nếu chưa tới tầm đánh -> Chạy tới
         if (distance > attackRange)
         {
             agent.isStopped = false;
             agent.SetDestination(playerTarget.position);
         }
-        else // Đã tới tầm đánh -> Dừng lại và Bem
+        else
         {
             agent.isStopped = true;
             RotateTowards(playerTarget.position);
@@ -87,30 +77,21 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    // Hàm xử lý đi dạo ngẫu nhiên
     void PatrolLogic()
     {
-        // Nếu đang đi dạo và chưa đến nơi -> cứ đi tiếp
-        if (agent.remainingDistance > agent.stoppingDistance)
-        {
-            return;
-        }
+        if (agent.remainingDistance > agent.stoppingDistance) return;
 
-        // Nếu đã đến nơi (hoặc đang đứng yên) -> Bắt đầu đếm giờ nghỉ
         patrolTimer += Time.deltaTime;
 
         if (patrolTimer >= patrolWaitTime)
         {
-            // Hết giờ nghỉ -> Tìm điểm mới để đi
             Vector3 newPos = RandomNavSphere(startPosition, patrolRadius, -1);
             agent.SetDestination(newPos);
             agent.isStopped = false;
-
-            patrolTimer = 0; // Reset bộ đếm
+            patrolTimer = 0;
         }
     }
 
-    // Hàm tìm điểm ngẫu nhiên trên NavMesh (Copy công thức chuẩn của Unity)
     public static Vector3 RandomNavSphere(Vector3 origin, float dist, int layermask)
     {
         Vector3 randDirection = Random.insideUnitSphere * dist;
@@ -120,12 +101,26 @@ public class EnemyController : MonoBehaviour
         return navHit.position;
     }
 
-    // --- CÁC HÀM CŨ (Attack, Die, TakeDamage...) GIỮ NGUYÊN ---
     void PerformAttack()
     {
         int randomIndex = Random.Range(1, 4);
         animator.SetInteger("AttackIndex", randomIndex);
         animator.SetTrigger("Attack");
+
+        // --- ĐOẠN CODE THÊM MỚI: Gây sát thương cho Player ---
+        if (playerTarget != null)
+        {
+            PlayerHealth pHealth = playerTarget.GetComponent<PlayerHealth>();
+            if (pHealth != null)
+            {
+                // Kiểm tra lại khoảng cách để chắc chắn đánh trúng
+                float dist = Vector3.Distance(transform.position, playerTarget.position);
+                if (dist <= attackRange + 0.5f)
+                {
+                    pHealth.TakeDamage(10); // Mỗi cú đánh mất 10 máu
+                }
+            }
+        }
     }
 
     public void TakeDamage(int damageAmount)
@@ -134,9 +129,7 @@ public class EnemyController : MonoBehaviour
         currentHealth -= damageAmount;
         if (currentHealth <= 0) Die();
         else animator.SetTrigger("Hit");
-
-        // Mẹo hay: Bị đánh cái là quay ra đuổi luôn, khỏi cần check tầm nhìn
-        chaseRange = 100f; // Tăng tầm đuổi lên cực đại tạm thời (Aggro)
+        chaseRange = 100f;
     }
 
     void Die()
@@ -155,12 +148,10 @@ public class EnemyController : MonoBehaviour
         transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 5f);
     }
 
-    // Vẽ vòng tròn trong Scene để bạn dễ chỉnh (Màu vàng: Tuần tra, Màu đỏ: Tầm đuổi)
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(Application.isPlaying ? startPosition : transform.position, patrolRadius);
-
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, chaseRange);
     }
