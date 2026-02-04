@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6749927649489291625}
-  - component: {fileID: 7933069629450637239}
+  - component: {fileID: -1217372066335942182}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -32,7 +32,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7933069629450637239
+--- !u!114 &-1217372066335942182
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -41,10 +41,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 642670111687882312}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0cc1543dac819cb4a9b4201b2f86753f, type: 3}
+  m_Script: {fileID: 11500000, guid: 1579042298b1e0a45aefa2aea0e4055e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InventoryManager
+  m_EditorClassIdentifier: 
   inventoryPanel: {fileID: 0}
   itemContent: {fileID: 0}
-  inventoryItemPrefab: {fileID: 5934458001641529139, guid: 8102e850e40b9a246bb032551693f140, type: 3}
+  inventoryItemPrefab: {fileID: 0}
   inventory: []
