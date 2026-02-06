@@ -12754,6 +12754,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Orc Shaman
       objectReference: {fileID: 0}
+    - target: {fileID: 8130647737370166876, guid: dcd080cf0f675a44fab01082e339e55e,
+        type: 3}
+      propertyPath: m_TagString
+      value: Boss
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

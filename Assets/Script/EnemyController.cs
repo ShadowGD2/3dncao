@@ -4,16 +4,16 @@ using UnityEngine.AI;
 public class EnemyController : MonoBehaviour
 {
     [Header("Cài đặt chung")]
-    public Transform playerTarget;   // Kéo Player vào đây
-    public float attackRange = 2.0f; // Khoảng cách để ĐÁNH
+    public Transform playerTarget;   
+    public float attackRange = 2.0f; 
     public float attackCooldown = 2.0f;
 
-    [Header("Cài đặt AI Thông minh")]
-    public float chaseRange = 10.0f;  // Khoảng cách để bắt đầu ĐUỔI
-    public float patrolRadius = 5.0f; // Bán kính vùng đi dạo tự do
-    public float patrolWaitTime = 3.0f; // Thời gian đứng nghỉ rồi mới đi tiếp
+    [Header("Cài đặt AI")]
+    public float chaseRange = 10.0f;  
+    public float patrolRadius = 5.0f; 
+    public float patrolWaitTime = 3.0f; 
 
-    [Header("Chỉ số sống còn")]
+    [Header("Chỉ số")]
     public int maxHealth = 100;
     private int currentHealth;
 
@@ -49,8 +49,9 @@ public class EnemyController : MonoBehaviour
             PatrolLogic();
         }
 
-        animator.SetFloat("Speed", agent.velocity.magnitude);
+        if(animator != null) animator.SetFloat("Speed", agent.velocity.magnitude);
 
+        // Phím H để test sát thương
         if (Input.GetKeyDown(KeyCode.H))
         {
             TakeDamage(30);
@@ -80,9 +81,7 @@ public class EnemyController : MonoBehaviour
     void PatrolLogic()
     {
         if (agent.remainingDistance > agent.stoppingDistance) return;
-
         patrolTimer += Time.deltaTime;
-
         if (patrolTimer >= patrolWaitTime)
         {
             Vector3 newPos = RandomNavSphere(startPosition, patrolRadius, -1);
@@ -104,21 +103,18 @@ public class EnemyController : MonoBehaviour
     void PerformAttack()
     {
         int randomIndex = Random.Range(1, 4);
-        animator.SetInteger("AttackIndex", randomIndex);
-        animator.SetTrigger("Attack");
+        if(animator != null) {
+            animator.SetInteger("AttackIndex", randomIndex);
+            animator.SetTrigger("Attack");
+        }
 
-        // --- ĐOẠN CODE THÊM MỚI: Gây sát thương cho Player ---
         if (playerTarget != null)
         {
-            PlayerHealth pHealth = playerTarget.GetComponent<PlayerHealth>();
-            if (pHealth != null)
+            // Giả sử script máu của người chơi là PlayerHealth
+            var pHealth = playerTarget.GetComponent<PlayerHealth>();
+            if (pHealth != null && Vector3.Distance(transform.position, playerTarget.position) <= attackRange + 0.5f)
             {
-                // Kiểm tra lại khoảng cách để chắc chắn đánh trúng
-                float dist = Vector3.Distance(transform.position, playerTarget.position);
-                if (dist <= attackRange + 0.5f)
-                {
-                    pHealth.TakeDamage(10); // Mỗi cú đánh mất 10 máu
-                }
+                pHealth.TakeDamage(10);
             }
         }
     }
@@ -128,17 +124,31 @@ public class EnemyController : MonoBehaviour
         if (isDead) return;
         currentHealth -= damageAmount;
         if (currentHealth <= 0) Die();
-        else animator.SetTrigger("Hit");
-        chaseRange = 100f;
+        else if(animator != null) animator.SetTrigger("Hit");
+        chaseRange = 100f; // Bị đánh thì đuổi theo xa hơn
     }
 
     void Die()
     {
+        if (isDead) return;
         isDead = true;
-        animator.SetTrigger("Die");
+        
+        if(animator != null) animator.SetTrigger("Die");
         agent.isStopped = true;
-        GetComponent<Collider>().enabled = false;
-        Destroy(gameObject, 5f);
+        
+        Collider col = GetComponent<Collider>();
+        if(col != null) col.enabled = false;
+
+        // KIỂM TRA NẾU LÀ BOSS THÌ XỬ LÝ ĐỂ HIỆN MÀN WIN
+        if (gameObject.CompareTag("Boss")) 
+        {
+            // Hủy sau 3 giây để NPCQuest.cs thấy activeBoss == null và gọi WinGame()
+            Destroy(gameObject, 3.0f); 
+        }
+        else 
+        {
+            Destroy(gameObject, 5f);
+        }
     }
 
     void RotateTowards(Vector3 target)
@@ -146,13 +156,5 @@ public class EnemyController : MonoBehaviour
         Vector3 direction = (target - transform.position).normalized;
         Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
         transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 5f);
-    }
-
-    void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(Application.isPlaying ? startPosition : transform.position, patrolRadius);
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, chaseRange);
     }
 }
