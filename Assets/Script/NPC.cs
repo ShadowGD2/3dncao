@@ -29,7 +29,7 @@ public class NPCQuest : MonoBehaviour {
     [Header("Lời thoại")]
     [TextArea(2, 5)] public string[] startDialogues;
     [TextArea(2, 5)] public string[] bossDialogues;
-    public string declineMessage = "Tiếc quá! Hẹn gặp lại bạn sau.";
+    public string declineMessage = "Tiếc quá! Hẹn gặp lại bạn sau nhé.";
 
     private int currentLine = 0;
     private bool isPlayerInRange = false;
@@ -42,12 +42,13 @@ public class NPCQuest : MonoBehaviour {
     }
 
     void Update() {
+        // Nhấn F để nói chuyện
         if (isPlayerInRange && Input.GetKeyDown(KeyCode.F) && !isTalking) {
             StartDialogue();
         }
 
-        // Kiểm tra thắng game khi Boss bị tiêu diệt
-        if (currentState == QuestState.HuntingBoss && activeBoss == null && questTrackerPanel.activeSelf) {
+        // KIỂM TRA THẮNG GAME: Nếu đang săn Boss và Boss đã bị Destroy (null)
+        if (currentState == QuestState.HuntingBoss && activeBoss == null && questTrackerPanel != null && questTrackerPanel.activeSelf) {
             WinGame();
         }
     }
@@ -55,15 +56,16 @@ public class NPCQuest : MonoBehaviour {
     void StartDialogue() {
         isTalking = true;
         currentLine = 0;
-        questPanel.SetActive(true);
+        if (questPanel != null) questPanel.SetActive(true);
         DisplayLine();
+        
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
 
     void DisplayLine() {
         string[] currentLines = (currentState == QuestState.NotStarted) ? startDialogues : bossDialogues;
-        if (currentLine < currentLines.Length) {
+        if (questText != null && currentLine < currentLines.Length) {
             questText.text = currentLines[currentLine];
         }
     }
@@ -75,27 +77,31 @@ public class NPCQuest : MonoBehaviour {
         if (currentLine < currentLines.Length) {
             DisplayLine();
         } else {
-            if (currentState == QuestState.NotStarted) StartCollectQuest();
-            else if (currentState == QuestState.Collecting && currentItemAmount >= targetItemAmount) StartBossQuest();
+            // Quyết định bắt đầu NV1 hoặc NV2 dựa trên trạng thái
+            if (currentState == QuestState.NotStarted) {
+                StartCollectQuest();
+            } 
+            else if (currentState == QuestState.Collecting && currentItemAmount >= targetItemAmount) {
+                StartBossQuest();
+            }
             
             CloseQuest();
         }
     }
 
     public void DeclineQuest() {
-        questText.text = declineMessage;
+        if (questText != null) questText.text = declineMessage;
         Invoke("CloseQuest", 1.5f);
     }
 
-    // --- LOGIC NHIỆM VỤ 1 ---
+    // --- LOGIC NHIỆM VỤ 1: THU THẬP ---
     void StartCollectQuest() {
         currentState = QuestState.Collecting;
-        questTrackerPanel.SetActive(true);
+        if (questTrackerPanel != null) questTrackerPanel.SetActive(true);
         UpdateTrackerUI("Thu thập: 0/" + targetItemAmount);
-        SpawnQuestItems(); // Hàm này đã được thêm bên dưới
+        SpawnQuestItems();
     }
 
-    // ĐÂY LÀ HÀM BẠN ĐANG THIẾU
     void SpawnQuestItems() {
         if (itemPrefab == null || spawnPoints.Length == 0) return;
         for (int i = 0; i < spawnPoints.Length; i++) {
@@ -111,29 +117,34 @@ public class NPCQuest : MonoBehaviour {
         UpdateTrackerUI("Thu thập: " + currentItemAmount + "/" + targetItemAmount);
         
         if (currentItemAmount >= targetItemAmount) {
-            questTrackerText.text = "Xong! Hãy về gặp NPC";
-            questTrackerText.color = Color.yellow;
+            if (questTrackerText != null) {
+                questTrackerText.text = "Xong! Hãy về gặp NPC";
+                questTrackerText.color = Color.yellow;
+            }
         }
     }
 
-    // --- LOGIC NHIỆM VỤ 2 ---
+    // --- LOGIC NHIỆM VỤ 2: ĐÁNH BOSS ---
     void StartBossQuest() {
         currentState = QuestState.HuntingBoss;
         UpdateTrackerUI("Tiêu diệt BOSS!");
-        questTrackerText.color = Color.red;
+        if (questTrackerText != null) questTrackerText.color = Color.red;
         
         if (bossPrefab != null && bossSpawnPoint != null) {
             activeBoss = Instantiate(bossPrefab, bossSpawnPoint.position, Quaternion.identity);
+            // Gán Tag Boss để script EnemyController biết đây là Boss
+            activeBoss.tag = "Boss"; 
         }
     }
 
     void WinGame() {
         currentState = QuestState.Finished;
-        questTrackerPanel.SetActive(false);
+        if (questTrackerPanel != null) questTrackerPanel.SetActive(false);
         if (winUI != null) winUI.SetActive(true);
+        
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
-        // Time.timeScale = 0; // Mở dòng này nếu muốn dừng game khi thắng
+        // Time.timeScale = 0; // Bỏ comment nếu muốn dừng game khi thắng
     }
 
     void UpdateTrackerUI(string text) {
@@ -142,7 +153,7 @@ public class NPCQuest : MonoBehaviour {
 
     public void CloseQuest() {
         isTalking = false;
-        questPanel.SetActive(false);
+        if (questPanel != null) questPanel.SetActive(false);
         if (currentState != QuestState.Finished) {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
